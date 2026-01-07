@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Permutation & Combination Calculator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<style>
+:root{
+  --blue:#2563eb;
+  --bg:#f4f6fb;
+  --card:#ffffff;
+  --muted:#6b7280;
+  --radius:14px;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto;
+  background:var(--bg);
+  color:#111827;
+}
+.container{
+  max-width:1100px;
+  margin:auto;
+  padding:16px;
+}
+.card{
+  background:var(--card);
+  border-radius:var(--radius);
+  box-shadow:0 12px 30px rgba(0,0,0,.08);
+  padding:18px;
+  margin-bottom:16px;
+}
+h1{
+  margin:0;
+  color:var(--blue);
+}
+.subtitle{
+  color:var(--muted);
+  margin-top:6px;
+}
+label{
+  font-weight:600;
+  font-size:14px;
+}
+input,select{
+  width:100%;
+  padding:12px;
+  margin-top:6px;
+  margin-bottom:14px;
+  border-radius:10px;
+  border:1px solid #d1d5db;
+  font-size:15px;
+}
+button{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:12px;
+  background:var(--blue);
+  color:white;
+  font-weight:700;
+  cursor:pointer;
+}
+button.secondary{
+  background:#eef2ff;
+  color:#111;
+  margin-top:10px;
+}
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+}
+@media(max-width:900px){
+  .grid{grid-template-columns:1fr}
+}
+.result-box{
+  background:#f9fafb;
+  border-radius:10px;
+  padding:14px;
+}
+.step{
+  background:#f3f4f6;
+  border-radius:8px;
+  padding:10px;
+  margin-bottom:8px;
+}
+.badge{
+  display:inline-block;
+  padding:4px 10px;
+  background:#e0e7ff;
+  color:#1e3a8a;
+  border-radius:999px;
+  font-size:12px;
+  margin-bottom:6px;
+}
+.error{
+  color:#dc2626;
+  font-weight:600;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<!-- INPUT -->
+<div class="card">
+  <h1>Permutation & Combination Calculator</h1>
+  <p class="subtitle">Accurate • Big-number safe • Explain like a teacher</p>
+
+  <label>Calculation Type</label>
+  <select id="type">
+    <option value="perm">Permutation (nPr)</option>
+    <option value="comb">Combination (nCr)</option>
+  </select>
+
+  <label>Total items (n)</label>
+  <input id="n" type="number" min="0" step="1" value="5" />
+
+  <label>Selected items (r)</label>
+  <input id="r" type="number" min="0" step="1" value="3" />
+
+  <label>
+    <input type="checkbox" id="teach" checked />
+    Explain like a teacher
+  </label>
+
+  <button onclick="calculate()">Calculate</button>
+  <button class="secondary" onclick="resetAll()">Reset</button>
+</div>
+
+<!-- OUTPUT -->
+<div class="grid">
+  <div class="card">
+    <h3>Result</h3>
+    <div id="result" class="result-box"></div>
+  </div>
+
+  <div class="card">
+    <h3>Step-by-Step</h3>
+    <div id="steps"></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+// Big-number safe multiplication for nPr
+function permutation(n, r){
+  let res = 1n;
+  for(let i = 0n; i < r; i++){
+    res *= (BigInt(n) - i);
+  }
+  return res;
+}
+
+// Big-number safe nCr using multiplicative formula
+function combination(n, r){
+  r = Math.min(r, n - r);
+  let res = 1n;
+  for(let i = 1n; i <= r; i++){
+    res = res * (BigInt(n) - r + i) / i;
+  }
+  return res;
+}
+
+function calculate(){
+  const type = document.getElementById("type").value;
+  const nVal = Number(document.getElementById("n").value);
+  const rVal = Number(document.getElementById("r").value);
+  const teach = document.getElementById("teach").checked;
+
+  const resultBox = document.getElementById("result");
+  const stepsBox = document.getElementById("steps");
+
+  resultBox.innerHTML = "";
+  stepsBox.innerHTML = "";
+
+  // Validation
+  if(!Number.isInteger(nVal) || !Number.isInteger(rVal)){
+    resultBox.innerHTML = `<span class="error">n and r must be integers.</span>`;
+    return;
+  }
+  if(nVal < 0 || rVal < 0){
+    resultBox.innerHTML = `<span class="error">n and r must be ≥ 0.</span>`;
+    return;
+  }
+  if(rVal > nVal){
+    resultBox.innerHTML = `<span class="error">r cannot be greater than n.</span>`;
+    return;
+  }
+
+  let answer;
+  if(type === "perm"){
+    answer = permutation(nVal, rVal);
+  } else {
+    answer = combination(nVal, rVal);
+  }
+
+  resultBox.innerHTML = `
+    <span class="badge">Final Answer</span><br>
+    <strong>${type === "perm" ? "nPr" : "nCr"} = ${answer.toString()}</strong>
+  `;
+
+  if(teach){
+    stepsBox.innerHTML += `<div class="step">Given n = ${nVal} and r = ${rVal}.</div>`;
+
+    if(type === "perm"){
+      stepsBox.innerHTML += `
+        <div class="step">
+          Permutation counts arrangements where order matters.<br>
+          Formula: nPr = n! / (n − r)!
+        </div>
+        <div class="step">
+          We multiply: ${nVal} × ${nVal-1} × … × (${nVal-rVal+1})
+        </div>
+      `;
+    } else {
+      stepsBox.innerHTML += `
+        <div class="step">
+          Combination counts selections where order does NOT matter.<br>
+          Formula: nCr = n! / (r!(n − r)!)
+        </div>
+        <div class="step">
+          We divide by r! to remove duplicate orderings.
+        </div>
+      `;
+    }
+
+    stepsBox.innerHTML += `
+      <div class="step">
+        Final result = ${answer.toString()}
+      </div>
+    `;
+  }
+}
+
+function resetAll(){
+  document.getElementById("n").value = 5;
+  document.getElementById("r").value = 3;
+  document.getElementById("type").value = "perm";
+  document.getElementById("result").innerHTML = "";
+  document.getElementById("steps").innerHTML = "";
+}
+</script>
+
+</body>
+</html>
